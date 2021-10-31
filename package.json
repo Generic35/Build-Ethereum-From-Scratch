@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Generic35/BuildEthereumFromScratch#readme",
   "dependencies": {
-    "jest": "^27.3.1"
+    "jest": "^27.3.1",
+    "js-sha3": "^0.8.0"
   }
 }
