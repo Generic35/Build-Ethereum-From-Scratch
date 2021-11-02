@@ -40,9 +40,6 @@ class Block {
 
 	
 
-		console.log('underTargetHash ', underTargetHash)
-		console.log('target ', target)
-
 		return new this({
 			blockHeaders: {
 				...truncatedBlockHeaders, nonce }
@@ -56,10 +53,3 @@ class Block {
 }
 
 module.exports = Block;
-
-const block = Block.mineBlock({
-	lastBlock: Block.genesis(),
-	beneficiary: 'foo'
-})
-
-console.log('block', block);

@@ -19,30 +19,30 @@ describe('Block', () => {
     });
   });
 
-  // describe('mineBlock()', () => {
-  //   let lastBlock, minedBlock;
+  describe('mineBlock()', () => {
+    let lastBlock, minedBlock;
 
-  //   beforeEach(() => {
-  //     lastBlock = Block.genesis();
-  //     minedBlock = Block.mineBlock({ lastBlock, beneficiary: 'beneficiary' });
-  //   });
+    beforeEach(() => {
+      lastBlock = Block.genesis();
+      minedBlock = Block.mineBlock({ lastBlock, beneficiary: 'beneficiary' });
+    });
 
-  //   it('mines a block', () => {
-  //     expect(minedBlock).toBeInstanceOf(Block);
-  //   });
+    it('mines a block', () => {
+      expect(minedBlock).toBeInstanceOf(Block);
+    });
 
-  //   it('mines a block that meets the proof of work requirement', () => {
-  //     const target = Block.calculateBlockTargetHash({ lastBlock });
-  //     const { blockHeaders } = minedBlock;
-  //     const { nonce } = blockHeaders;
-  //     const truncatedBlockHeaders = { ...blockHeaders };
-  //     delete truncatedBlockHeaders.nonce;
-  //     const header = keccakHash(truncatedBlockHeaders);
-  //     const underTargetHash = keccakHash(header + nonce);
+    it('mines a block that meets the proof of work requirement', () => {
+      const target = Block.calculateBlockTargetHash({ lastBlock });
+      const { blockHeaders } = minedBlock;
+      const { nonce } = blockHeaders;
+      const truncatedBlockHeaders = { ...blockHeaders };
+      delete truncatedBlockHeaders.nonce;
+      const header = keccakHash(truncatedBlockHeaders);
+      const underTargetHash = keccakHash(header + nonce);
 
-  //     expect(underTargetHash < target).toBe(true);
-  //   });
-  // });
+      expect(underTargetHash < target).toBe(true);
+    });
+  });
 
   // describe('adjustDifficulty()', () => {
   //   it('keeps the difficulty above 0', () => {
