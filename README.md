@@ -5,5 +5,5 @@ Including:
 - Programing language clone of solidity
 - Blockchain
 - Network of mining nodes
-- Transactions and Accounts logic
+- Transactions and Accounts
 - State Management
