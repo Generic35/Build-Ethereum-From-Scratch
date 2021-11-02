@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-   	"dev": "nodemon ./api",
+    "dev": "nodemon ./api",
     "start": "node ./api",
     "test": "jest --watchAll"
   },
@@ -23,6 +23,7 @@
     "express": "^4.17.1",
     "jest": "^27.3.1",
     "js-sha3": "^0.8.0",
-    "nodemon": "^2.0.14"
+    "nodemon": "^2.0.14",
+    "pubnub": "^4.33.1"
   }
 }
