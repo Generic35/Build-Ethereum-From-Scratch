@@ -1,12 +1,20 @@
 const express = require('express');
 const request = require('request');
+const Account = require('../account');
 const Blockchain = require('../blockchain');
 const Block = require('../blockchain/block');
 const PubSub = require('./pubsub');
+const Transaction = require('../transaction');
+const TransactionQueue = require('../transaction/transaction-queue');
 
 const app = express();
 const blockchain = new Blockchain();
-const pubsub = new PubSub({ blockchain })
+const transactionQueue = new TransactionQueue();
+const pubsub = new PubSub({ blockchain });
+const account = new Account();
+const transaction = Transaction.createTransaction({ account });
+
+transactionQueue.add(transaction);
 
 app.get('/blockchain', (req, res, next) => {
   const { chain } = blockchain;
@@ -15,12 +23,13 @@ app.get('/blockchain', (req, res, next) => {
 });
 
 app.get('/blockchain/mine', (req, res, next) => {
-  const lastBlock = blockchain.chain[blockchain.chain.length-1];
-  const block = Block.mineBlock({ lastBlock });
+  const lastBlock = blockchain.chain[blockchain.chain.length - 1];
+  const block = Block.mineBlock({ lastBlock, beneficiary: account.address });
 
-  blockchain.addBlock({ block })
+  blockchain
+    .addBlock({ block })
     .then(() => {
-			pubsub.broadcastBlock(block);
+      pubsub.broadcastBlock(block);
       res.json({ block });
     })
     .catch(next);
@@ -36,14 +45,17 @@ const peer = process.argv.includes('--peer');
 
 const PORT = peer ? Math.floor(2000 + Math.random() * 1000) : 3000;
 
-if (peer){
-	request('http://localhost:3000/blockchain', (error, response, body) => {
-		const { chain } = JSON.parse(body);
+if (peer) {
+  request('http://localhost:3000/blockchain', (error, response, body) => {
+    const { chain } = JSON.parse(body);
 
-		blockchain.replaceChain({ chain })
-			.then(() => console.log('Synchronized blockchain with the root node'))
-			.catch((error) => console.error('Synchronization error: ', error.message));
-	});
+    blockchain
+      .replaceChain({ chain })
+      .then(() => console.log('Synchronized blockchain with the root node'))
+      .catch((error) =>
+        console.error('Synchronization error: ', error.message)
+      );
+  });
 }
 
 app.listen(PORT, () => console.log(`Listening at PORT: ${PORT}`));
