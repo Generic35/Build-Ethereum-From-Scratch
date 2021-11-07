@@ -6,12 +6,15 @@ const MAX_HASH_VALUE = parseInt('f'.repeat(HASH_LENGTH), 16);
 const MAX_NONCE_VALUE = 2 ** 64;
 
 class Block {
-  constructor({ blockHeaders }) {
+  constructor({ blockHeaders, transactionSeries }) {
     this.blockHeaders = blockHeaders;
+    this.transactionSeries = transactionSeries;
   }
 
   static calculateBlockTargetHash({ lastBlock }) {
-    const value = (MAX_HASH_VALUE / lastBlock.blockHeaders.difficulty).toString(16);
+    const value = (MAX_HASH_VALUE / lastBlock.blockHeaders.difficulty).toString(
+      16
+    );
 
     if (value.length > HASH_LENGTH) {
       return 'f'.repeat(HASH_LENGTH);
@@ -23,7 +26,7 @@ class Block {
   static adjustDifficulty({ lastBlock, timestamp }) {
     const { difficulty } = lastBlock.blockHeaders;
 
-    if ((timestamp - lastBlock.blockHeaders.timestamp) > MINE_RATE) {
+    if (timestamp - lastBlock.blockHeaders.timestamp > MINE_RATE) {
       return difficulty - 1;
     }
 
@@ -34,7 +37,7 @@ class Block {
     return difficulty + 1;
   }
 
-  static mineBlock({ lastBlock, beneficiary }) {
+  static mineBlock({ lastBlock, beneficiary, transactionSeries }) {
     const target = Block.calculateBlockTargetHash({ lastBlock });
     let timestamp, truncatedBlockHeaders, header, nonce, underTargetHash;
 
@@ -45,16 +48,19 @@ class Block {
         beneficiary,
         difficulty: Block.adjustDifficulty({ lastBlock, timestamp }),
         number: lastBlock.blockHeaders.number + 1,
-        timestamp
+        timestamp,
+        // NOTE: the transction root will be refactored once Tries are impelemented
+        transactionRoot: keccakHash(transactionSeries),
       };
       header = keccakHash(truncatedBlockHeaders);
       nonce = Math.floor(Math.random() * MAX_NONCE_VALUE);
-  
+
       underTargetHash = keccakHash(header + nonce);
     } while (underTargetHash > target);
 
     return new this({
-      blockHeaders: { ...truncatedBlockHeaders, nonce }
+      blockHeaders: { ...truncatedBlockHeaders, nonce },
+      transactionSeries,
     });
   }
 
@@ -68,9 +74,13 @@ class Block {
         return resolve();
       }
 
-      if (keccakHash(lastBlock.blockHeaders) !== block.blockHeaders.parentHash) {
+      if (
+        keccakHash(lastBlock.blockHeaders) !== block.blockHeaders.parentHash
+      ) {
         return reject(
-          new Error("The parent hash must be a hash of the last block's headers")
+          new Error(
+            "The parent hash must be a hash of the last block's headers"
+          )
         );
       }
 
@@ -79,7 +89,9 @@ class Block {
       }
 
       if (
-        Math.abs(lastBlock.blockHeaders.difficulty - block.blockHeaders.difficulty) > 1
+        Math.abs(
+          lastBlock.blockHeaders.difficulty - block.blockHeaders.difficulty
+        ) > 1
       ) {
         return reject(new Error('The difficulty must only adjust by 1'));
       }
@@ -93,9 +105,9 @@ class Block {
       const underTargetHash = keccakHash(header + nonce);
 
       if (underTargetHash > target) {
-        return reject(new Error(
-          'The block does not meet the proof of work requirement'
-        ));
+        return reject(
+          new Error('The block does not meet the proof of work requirement')
+        );
       }
 
       return resolve();
