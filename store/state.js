@@ -6,7 +6,7 @@ class State {
   }
 
   putAccount({ address, accountData }) {
-    this.stateTrie({ key: address, value: accountData });
+    this.stateTrie.put({ key: address, value: accountData });
   }
 
   getAccount({ address }) {
