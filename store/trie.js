@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const { keccakHash } = require('../util');
+
 class Node {
   constructor() {
     this.value = null;
@@ -21,9 +22,7 @@ class Trie {
     let node = this.head;
 
     for (let character of key) {
-      if (!node.childMap[character]) {
-        return null;
-      } else {
+      if (node.childMap[character]) {
         node = node.childMap[character];
       }
     }

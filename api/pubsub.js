@@ -2,15 +2,15 @@ const PubNub = require('pubnub');
 const Transaction = require('../transaction');
 
 const credentials = {
-  publishKey: 'pub-c-0214d5de-56ac-4c54-9076-f58055ce8e10',
-  subscribeKey: 'sub-c-69ee7c6e-3c1f-11ec-8182-fea14ba1eb2b',
-  secretKey: 'sec-c-OWUwYTRkNGUtOTQzMS00ODQyLWJhMDMtNzJiMjhkNTRiMmFm',
+  publishKey: 'pub-c-2a9a12fd-bd7e-45ae-9743-23f7909dd90f',
+  subscribeKey: 'sub-c-f6ad80a4-c085-11e9-8d65-be5536b78e9a',
+  secretKey: 'sec-c-MTE0NDA5NDctNGRkZC00YjFmLTgyOGUtOWRlYTM0YmRiNWRh'
 };
 
 const CHANNELS_MAP = {
   TEST: 'TEST',
   BLOCK: 'BLOCK',
-  TRANSACTION: 'TRANSACTION',
+  TRANSACTION: 'TRANSACTION'
 };
 
 class PubSub {
@@ -24,7 +24,7 @@ class PubSub {
 
   subscribeToChannels() {
     this.pubnub.subscribe({
-      channels: Object.values(CHANNELS_MAP),
+      channels: Object.values(CHANNELS_MAP)
     });
   }
 
@@ -34,50 +34,46 @@ class PubSub {
 
   listen() {
     this.pubnub.addListener({
-      message: (messageObject) => {
+      message: messageObject => {
         const { channel, message } = messageObject;
         const parsedMessage = JSON.parse(message);
 
-        console.log('Message received. Channel: ', channel);
+        console.log('Message received. Channel:', channel);
 
         switch (channel) {
           case CHANNELS_MAP.BLOCK:
-            console.log('block message :', message);
-            this.blockchain
-              .addBlock({
-                block: parsedMessage,
-                transactionQueue: this.transactionQueue,
-              })
-              .then(() => {
-                console.log('New block accepted ', parsedMessage);
-              })
-              .catch((error) =>
-                console.error('New block rejected: ', error.message)
-              );
+            console.log('block message', message);
+
+            this.blockchain.addBlock({
+              block: parsedMessage,
+              transactionQueue: this.transactionQueue
+            }).then(() => console.log('New block accepted', parsedMessage))
+              .catch(error => console.error('New block rejected:', error.message));
             break;
           case CHANNELS_MAP.TRANSACTION:
-            console.log(`Recieved transaction: ${parsedMessage.id}`);
+            console.log(`Received transaction: ${parsedMessage.id}`);
+
             this.transactionQueue.add(new Transaction(parsedMessage));
 
             break;
           default:
             return;
         }
-      },
+      }
     });
   }
 
   broadcastBlock(block) {
     this.publish({
       channel: CHANNELS_MAP.BLOCK,
-      message: JSON.stringify(block),
+      message: JSON.stringify(block)
     });
   }
 
   broadcastTransaction(transaction) {
     this.publish({
       channel: CHANNELS_MAP.TRANSACTION,
-      message: JSON.stringify(transaction),
+      message: JSON.stringify(transaction)
     });
   }
 }

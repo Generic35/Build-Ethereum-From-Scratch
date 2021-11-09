@@ -30,18 +30,18 @@ app.get('/blockchain', (req, res, next) => {
 });
 
 app.get('/blockchain/mine', (req, res, next) => {
-  const lastBlock = blockchain.chain[blockchain.chain.length - 1];
+  const lastBlock = blockchain.chain[blockchain.chain.length-1];
   const block = Block.mineBlock({
     lastBlock,
     beneficiary: account.address,
     transactionSeries: transactionQueue.getTransactionSeries(),
-    stateRoot: state.getStateRoot(),
+    stateRoot: state.getStateRoot()
   });
 
-  blockchain
-    .addBlock({ block, transactionQueue })
+  blockchain.addBlock({ block, transactionQueue })
     .then(() => {
       pubsub.broadcastBlock(block);
+
       res.json({ block });
     })
     .catch(next);
@@ -52,8 +52,9 @@ app.post('/account/transact', (req, res, next) => {
   const transaction = Transaction.createTransaction({
     account: !to ? new Account() : account,
     to,
-    value,
+    value
   });
+
   pubsub.broadcastTransaction(transaction);
 
   res.json({ transaction });
@@ -64,7 +65,7 @@ app.get('/account/balance', (req, res, next) => {
 
   const balance = Account.calculateBalance({
     address: address || account.address,
-    state,
+    state
   });
 
   res.json({ balance });
@@ -77,19 +78,17 @@ app.use((err, req, res, next) => {
 });
 
 const peer = process.argv.includes('--peer');
-
-const PORT = peer ? Math.floor(2000 + Math.random() * 1000) : 3000;
+const PORT = peer
+  ? Math.floor(2000 + Math.random() * 1000)
+  : 3000;
 
 if (peer) {
   request('http://localhost:3000/blockchain', (error, response, body) => {
     const { chain } = JSON.parse(body);
 
-    blockchain
-      .replaceChain({ chain })
+    blockchain.replaceChain({ chain })
       .then(() => console.log('Synchronized blockchain with the root node'))
-      .catch((error) =>
-        console.error('Synchronization error: ', error.message)
-      );
+      .catch(error => console.error('Synchronization error:', error.message));
   });
 }
 

@@ -15,7 +15,7 @@ class Account {
   toJSON() {
     return {
       address: this.address,
-      balance: this.balance,
+      balance: this.balance
     };
   }
 

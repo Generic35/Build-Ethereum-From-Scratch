@@ -1,10 +1,9 @@
-// const uuid = require('uuid/v4');
-const { v4: uuid } = require('uuid'); // NEW
+const uuid = require('uuid/v4');
 const Account = require('../account');
 
 const TRANSACTION_TYPE_MAP = {
   CREATE_ACCOUNT: 'CREATE_ACCOUNT',
-  TRANSACT: 'TRANSACT',
+  TRANSACT: 'TRANSACT'
 };
 
 class Transaction {
@@ -24,53 +23,51 @@ class Transaction {
         from: account.address,
         to,
         value,
-        data: { type: TRANSACTION_TYPE_MAP.TRANSACT },
+        data: { type: TRANSACTION_TYPE_MAP.TRANSACT }
       };
 
       return new Transaction({
         ...transactionData,
-        signature: account.sign(transactionData),
+        signature: account.sign(transactionData)
       });
     }
 
     return new Transaction({
       data: {
         type: TRANSACTION_TYPE_MAP.CREATE_ACCOUNT,
-        accountData: account.toJSON(),
-      },
+        accountData: account.toJSON()
+      }
     });
   }
 
   static validateStandardTransaction({ state, transaction }) {
     return new Promise((resolve, reject) => {
-      const { from, id, signature, value, to } = transaction;
+      const { id, from, signature, value, to } = transaction;
       const transactionData = { ...transaction };
-      delete transaction.signature;
+      delete transactionData.signature;
 
-      if (
-        !Account.verifySignature({
-          publicKey: from,
-          data: transactionData,
-          signature,
-        })
-      ) {
-        return reject(Error(`Transaction ${id} signature is invalid`));
+      if (!Account.verifySignature({
+        publicKey: from,
+        data: transactionData,
+        signature
+      })) {
+        return reject(new Error(`Transaction ${id} signature is invalid`));
       }
 
       const fromBalance = state.getAccount({ address: from }).balance;
 
       if (value > fromBalance) {
-        return reject(
-          new Error(
-            `Transaction value: ${value} exceeds balance: ${fromBalance}`
-          )
-        );
+        return reject(new Error(
+          `Transaction value: ${value} exceeds balance: ${fromBalance}`
+        ));
       }
 
       const toAccount = state.getAccount({ address: to });
 
       if (!toAccount) {
-        return reject(new Error(`The to field: ${to} does not exist`));
+        return reject(new Error(
+          `The to field: ${to} does not exist`
+        ));
       }
 
       return resolve();
@@ -84,17 +81,15 @@ class Transaction {
 
       if (fields.length !== expectedAccountDataFields.length) {
         return reject(
-          new Error(
-            `The transaction account data has an incorect number of fields`
-          )
+          new Error(`The transaction account data has an incorrect number of fields`)
         );
       }
 
-      fields.forEach((field) => {
+      fields.forEach(field => {
         if (!expectedAccountDataFields.includes(field)) {
-          return reject(
-            new Error(`The field: ${field}, is unexpected for account data`)
-          );
+          return reject(new Error(
+            `The field: ${field}, is unexpected for account data`
+          ));
         }
       });
 
@@ -109,18 +104,18 @@ class Transaction {
           switch (transaction.data.type) {
             case TRANSACTION_TYPE_MAP.CREATE_ACCOUNT:
               await Transaction.validateCreateAccountTransaction({
-                transaction,
+                transaction
               });
               break;
             case TRANSACTION_TYPE_MAP.TRANSACT:
               await Transaction.validateStandardTransaction({
                 state,
-                transaction,
+                transaction
               });
               break;
             default:
               break;
-          }
+          } 
         } catch (error) {
           return reject(error);
         }
@@ -131,7 +126,7 @@ class Transaction {
   }
 
   static runTransaction({ state, transaction }) {
-    switch (transaction.data.type) {
+    switch(transaction.data.type) {
       case TRANSACTION_TYPE_MAP.TRANSACT:
         Transaction.runStandardTransaction({ state, transaction });
         console.log(
@@ -140,7 +135,7 @@ class Transaction {
         break;
       case TRANSACTION_TYPE_MAP.CREATE_ACCOUNT:
         Transaction.runCreateAccountTransaction({ state, transaction });
-        console.log(' -- Stored the account data --');
+        console.log(' -- Stored the account data');
         break;
       default:
         break;
