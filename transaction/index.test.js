@@ -1,6 +1,6 @@
 const Transaction = require('./index');
 const Account = require('../account');
-// const State = require('../store/state');
+const State = require('../store/state');
 
 describe('Transaction', () => {
   let account;
@@ -13,9 +13,9 @@ describe('Transaction', () => {
   beforeEach(() => {
     account = new Account();
     toAccount = new Account();
-    // state = new State();
-    // state.putAccount({ address: account.address, accountData: account });
-    // state.putAccount({ address: toAccount.address, accountData: toAccount });
+    state = new State();
+    state.putAccount({ address: account.address, accountData: account });
+    state.putAccount({ address: toAccount.address, accountData: toAccount });
 
     standardTransaction = Transaction.createTransaction({
       account,
@@ -51,7 +51,7 @@ describe('Transaction', () => {
       ).rejects.toMatchObject({ message: /invalid/ });
     });
 
-    xit('does not validate when the value exceeds the balance', () => {
+    it('does not validate when the value exceeds the balance', () => {
       standardTransaction = Transaction.createTransaction({
         account,
         to: toAccount.address,
@@ -66,7 +66,7 @@ describe('Transaction', () => {
       ).rejects.toMatchObject({ message: /exceeds/ });
     });
 
-    xit('does not validate when the `to` address does not exist', () => {
+    it('does not validate when the `to` address does not exist', () => {
       standardTransaction = Transaction.createTransaction({
         account,
         to: 'foo-recipient',
