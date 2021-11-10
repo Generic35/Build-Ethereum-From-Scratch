@@ -1,16 +1,19 @@
 const { post } = require('request');
 const request = require('request');
 
+const { OPCODE_MAP } = require('./interpreter');
+const { STOP, ADD, PUSH } = OPCODE_MAP;
+
 const BASE_URL = 'http://localhost:3000';
 
-const postTransact = ({ to, value }) => {
+const postTransact = ({ code, to, value }) => {
   return new Promise((resolve, reject) => {
     request(
       `${BASE_URL}/account/transact`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, value }),
+        body: JSON.stringify({ code, to, value }),
       },
       (error, response, body) => {
         return resolve(JSON.parse(body));
@@ -25,7 +28,7 @@ const getMine = () => {
       request(`${BASE_URL}/blockchain/mine`, (error, response, body) => {
         return resolve(JSON.parse(body));
       });
-    }, 1000);
+    }, 2000);
   });
 };
 
@@ -64,6 +67,15 @@ postTransact({})
       postTransactionResponse2
     );
 
+    const code = [PUSH, 4, PUSH, 5, ADD, STOP];
+
+    return postTransact({ code });
+  })
+  .then((postTransactResponse3) => {
+    console.log(
+      'postTransactResponse3 (Smart Contract): ',
+      postTransactResponse3
+    );
     return getMine();
   })
   .then((getMineResponse2) => {
