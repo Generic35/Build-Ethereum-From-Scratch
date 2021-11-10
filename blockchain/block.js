@@ -1,6 +1,8 @@
 const { GENESIS_DATA, MINE_RATE } = require('../config');
 const { keccakHash } = require('../util');
 const Transaction = require('../transaction');
+const Trie = require('../store/trie');
+const { buildTrie } = require('../store/trie');
 
 const HASH_LENGTH = 64;
 const MAX_HASH_VALUE = parseInt('f'.repeat(HASH_LENGTH), 16);
@@ -13,7 +15,9 @@ class Block {
   }
 
   static calculateBlockTargetHash({ lastBlock }) {
-    const value = (MAX_HASH_VALUE / lastBlock.blockHeaders.difficulty).toString(16);
+    const value = (MAX_HASH_VALUE / lastBlock.blockHeaders.difficulty).toString(
+      16
+    );
 
     if (value.length > HASH_LENGTH) {
       return 'f'.repeat(HASH_LENGTH);
@@ -25,7 +29,7 @@ class Block {
   static adjustDifficulty({ lastBlock, timestamp }) {
     const { difficulty } = lastBlock.blockHeaders;
 
-    if ((timestamp - lastBlock.blockHeaders.timestamp) > MINE_RATE) {
+    if (timestamp - lastBlock.blockHeaders.timestamp > MINE_RATE) {
       return difficulty - 1;
     }
 
@@ -36,13 +40,9 @@ class Block {
     return difficulty + 1;
   }
 
-  static mineBlock({
-    lastBlock,
-    beneficiary,
-    transactionSeries,
-    stateRoot
-  }) {
+  static mineBlock({ lastBlock, beneficiary, transactionSeries, stateRoot }) {
     const target = Block.calculateBlockTargetHash({ lastBlock });
+    const transactionsTrie = Trie.buildTrie({ items: transactionSeries });
     let timestamp, truncatedBlockHeaders, header, nonce, underTargetHash;
 
     do {
@@ -53,22 +53,18 @@ class Block {
         difficulty: Block.adjustDifficulty({ lastBlock, timestamp }),
         number: lastBlock.blockHeaders.number + 1,
         timestamp,
-        /**
-         * NOTE: the `transactionRoot` will be refactored once Tries are
-         * implemented.
-         */
-        transactionsRoot: keccakHash(transactionSeries),
-        stateRoot
+        transactionsRoot: transactionsTrie.rootHash,
+        stateRoot,
       };
       header = keccakHash(truncatedBlockHeaders);
       nonce = Math.floor(Math.random() * MAX_NONCE_VALUE);
-  
+
       underTargetHash = keccakHash(header + nonce);
     } while (underTargetHash > target);
 
     return new this({
       blockHeaders: { ...truncatedBlockHeaders, nonce },
-      transactionSeries
+      transactionSeries,
     });
   }
 
@@ -82,9 +78,13 @@ class Block {
         return resolve();
       }
 
-      if (keccakHash(lastBlock.blockHeaders) !== block.blockHeaders.parentHash) {
+      if (
+        keccakHash(lastBlock.blockHeaders) !== block.blockHeaders.parentHash
+      ) {
         return reject(
-          new Error("The parent hash must be a hash of the last block's headers")
+          new Error(
+            "The parent hash must be a hash of the last block's headers"
+          )
         );
       }
 
@@ -93,9 +93,26 @@ class Block {
       }
 
       if (
-        Math.abs(lastBlock.blockHeaders.difficulty - block.blockHeaders.difficulty) > 1
+        Math.abs(
+          lastBlock.blockHeaders.difficulty - block.blockHeaders.difficulty
+        ) > 1
       ) {
         return reject(new Error('The difficulty must only adjust by 1'));
+      }
+
+      const rebuiltTransactionsTrie = Trie.buildTrie({
+        items: block.transactionSeries,
+      });
+
+      if (
+        rebuiltTransactionsTrie.rootHash != block.blockHeaders.transactionsRoot
+      ) {
+        return reject(
+          new Error(
+            `The rebuilt transactions root does not match the block's` +
+              ` transactions root: ${block.blockHeaders.transactionsRoot}`
+          )
+        );
       }
 
       const target = Block.calculateBlockTargetHash({ lastBlock });
@@ -107,14 +124,16 @@ class Block {
       const underTargetHash = keccakHash(header + nonce);
 
       if (underTargetHash > target) {
-        return reject(new Error(
-          'The block does not meet the proof of work requirement'
-        ));
+        return reject(
+          new Error('The block does not meet the proof of work requirement')
+        );
       }
 
       Transaction.validateTransactionSeries({
-        state, transactionSeries: block.transactionSeries
-      }).then(resolve)
+        state,
+        transactionSeries: block.transactionSeries,
+      })
+        .then(resolve)
         .catch(reject);
     });
   }
