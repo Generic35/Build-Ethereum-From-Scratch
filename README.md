@@ -9,7 +9,7 @@ Including:
 - State Management
 
 Ways to extend this project:
-- Add gas price to the current features of gas limit and gasUsed
+- To the current features of gas limit and gas used, add gas price
 - Add fees to transaction 
 - Add the ability for the miner to have control over the transaction series (prioritize based on gas price)
 - Add tiny reward for ommers (blocks that were invalid but for which the miner still spent effort on)
