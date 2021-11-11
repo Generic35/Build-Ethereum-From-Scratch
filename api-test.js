@@ -44,11 +44,12 @@ const getAccountBalance = ({ address } = {}) => {
 };
 
 let toAccountData;
+let smartContractAccountData;
 
 postTransact({})
   .then((postTransactionResponse) => {
     console.log(
-      'postTransctResponse (Create Account Transaction): ',
+      '>>> postTransctResponse (Create Account Transaction): ',
       postTransactionResponse
     );
 
@@ -63,7 +64,7 @@ postTransact({})
   })
   .then((postTransactionResponse2) => {
     console.log(
-      'postTransctionResponse2( Standard Transaction)',
+      '>>> postTransctionResponse2(Standard Transaction): ',
       postTransactionResponse2
     );
 
@@ -73,20 +74,40 @@ postTransact({})
   })
   .then((postTransactResponse3) => {
     console.log(
-      'postTransactResponse3 (Smart Contract): ',
+      '>>> postTransactResponse3 (Smart Contract): ',
       postTransactResponse3
     );
+
+    smartContractAccountData =
+      postTransactResponse3.transaction.data.accountData;
+
     return getMine();
   })
   .then((getMineResponse2) => {
-    console.log('getMineResponse2 ', getMineResponse2);
+    console.log('>>> getMineResponse2 ', getMineResponse2);
+
+    return postTransact({
+      to: smartContractAccountData.codeHash,
+      value: 0,
+    });
+  })
+  .then((postTransactionResponse4) => {
+    console.log(
+      '>>> postTransactResponse4 (to the smart contract): ',
+      postTransactionResponse4
+    );
+    return getMine();
+  })
+  .then((getMineResponse3) => {
+    console.log('>>> getMineResponse3 ', getMineResponse3);
+
     return getAccountBalance();
   })
   .then((getAccountBalanceResponse) => {
-    console.log('getAccountBalanceResponse ', getAccountBalanceResponse);
+    console.log('>>> getAccountBalanceResponse ', getAccountBalanceResponse);
 
     return getAccountBalance({ address: toAccountData.address });
   })
   .then((getAccountBalanceResponse2) => {
-    console.log('getAccountBalanceResponse2 :', getAccountBalanceResponse2);
+    console.log('>>> getAccountBalanceResponse2 :', getAccountBalanceResponse2);
   });
